@@ -169,6 +169,7 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
     private ChatUsersActivityDelegate delegate;
 
     private boolean needOpenSearch;
+    private boolean showRecents = true;
 
     private boolean searching;
 
@@ -415,6 +416,7 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
         needOpenSearch = arguments.getBoolean("open_search");
         selectType = arguments.getInt("selectType");
         currentChat = getMessagesController().getChat(chatId);
+        showRecents = arguments.getBoolean("showRecents", true);
         if (currentChat != null && currentChat.default_banned_rights != null) {
             defaultBannedRights.view_messages = currentChat.default_banned_rights.view_messages;
             defaultBannedRights.send_stickers = currentChat.default_banned_rights.send_stickers;
@@ -564,11 +566,6 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
                 loadingUserCellRow = rowCount++;
             }
         } else if (type == TYPE_ADMIN) {
-            if (ChatObject.isChannel(currentChat) && currentChat.megagroup && !currentChat.gigagroup && (info == null || info.participants_count <= 200)) {
-                recentActionsRow = rowCount++;
-                addNewSectionRow = rowCount++;
-            }
-
             if (ChatObject.canAddAdmins(currentChat)) {
                 addNewRow = rowCount++;
             }
@@ -2981,9 +2978,7 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
                 Object object = cell.getCurrentObject();
                 if (type != TYPE_ADMIN && object instanceof TLRPC.User) {
                     TLRPC.User user = (TLRPC.User) object;
-                    if (user.self) {
-                        return false;
-                    }
+                    return !user.self;
                 }
                 return true;
             }
@@ -3512,10 +3507,7 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
             if (areItemsTheSame(oldItemPosition, newItemPosition)) {
-                if (restricted1SectionRow == newItemPosition) {
-                    return false;
-                }
-                return true;
+                return restricted1SectionRow != newItemPosition;
             }
             return false;
         }

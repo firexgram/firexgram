@@ -18,8 +18,8 @@ public class BuildVars {
     public static boolean LOGS_ENABLED = false;
     public static boolean DEBUG_PRIVATE_VERSION = false;
     public static boolean USE_CLOUD_STRINGS = true;
-    public static boolean CHECK_UPDATES = true;
-    public static boolean NO_SCOPED_STORAGE = Build.VERSION.SDK_INT <= 29;
+    public static boolean CHECK_UPDATES = false;
+    public static boolean NO_SCOPED_STORAGE = true /*Build.VERSION.SDK_INT <= 29*/;
     public static int BUILD_VERSION = 2526;
     public static String BUILD_VERSION_STRING = "8.4.2";
     public static int APP_ID = BuildConfig.APP_ID; //obtain your own APP_ID at https://core.telegram.org/api/obtaining_api_id
@@ -31,20 +31,15 @@ public class BuildVars {
     static {
         if (ApplicationLoader.applicationContext != null) {
             SharedPreferences sharedPreferences = ApplicationLoader.applicationContext.getSharedPreferences("systemConfig", Context.MODE_PRIVATE);
-            LOGS_ENABLED = DEBUG_VERSION || sharedPreferences.getBoolean("logsEnabled", DEBUG_VERSION);
+            LOGS_ENABLED = DEBUG_VERSION || sharedPreferences.getBoolean("logsEnabled", false);
         }
     }
 
-    private static Boolean standaloneApp;
     public static boolean isStandaloneApp() {
         return true;
     }
 
-    private static Boolean betaApp;
     public static boolean isBetaApp() {
-        if (betaApp == null) {
-            betaApp = ApplicationLoader.applicationContext != null && "org.telegram.messenger.beta".equals(ApplicationLoader.applicationContext.getPackageName());
-        }
-        return betaApp;
+        return false;
     }
 }

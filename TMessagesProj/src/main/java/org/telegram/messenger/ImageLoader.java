@@ -75,6 +75,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
+import ua.itaysonlab.catogram.CatogramConfig;
+
 /**
  * image filter types
  * suffixes:
@@ -83,6 +85,7 @@ import java.util.zip.GZIPInputStream;
  * b - need blur image
  * g - autoplay
  */
+
 public class ImageLoader {
 
     private HashMap<String, Integer> bitmapUseCounts = new HashMap<>();
@@ -1979,7 +1982,7 @@ public class ImageLoader {
 
         try {
             if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-                File path = Environment.getExternalStorageDirectory();
+                File path = CatogramConfig.INSTANCE.getPrivateDir() ? ApplicationLoader.applicationContext.getExternalFilesDir(null) : Environment.getExternalStorageDirectory();
                 if (Build.VERSION.SDK_INT >= 19 && !TextUtils.isEmpty(SharedConfig.storageCacheDir)) {
                     ArrayList<File> dirs = AndroidUtilities.getRootDirs();
                     if (dirs != null) {
