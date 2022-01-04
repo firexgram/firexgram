@@ -51,6 +51,8 @@ import org.telegram.ui.Components.SnowflakesEffect;
 
 import java.util.ArrayList;
 
+import ua.itaysonlab.catogram.CatogramConfig;
+
 public class ActionBar extends FrameLayout {
 
     public static class ActionBarMenuOnItemClick {
@@ -102,7 +104,7 @@ public class ActionBar extends FrameLayout {
     private Runnable lastRunnable;
     private boolean titleOverlayShown;
     private Runnable titleActionRunnable;
-    private boolean castShadows = true;
+    private boolean castShadows = !CatogramConfig.INSTANCE.getFlatActionbar();
 
     protected boolean isSearchFieldVisible;
     protected int itemsBackgroundColor;
@@ -199,6 +201,11 @@ public class ActionBar extends FrameLayout {
         invalidate();
     }
 
+    public void setOnTitleLongClickListner(View.OnLongClickListener listener) {
+        titleTextView[0].setOnLongClickListener(listener);
+        subtitleTextView.setOnLongClickListener(listener);
+    }
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (supportsHolidayImage && !titleOverlayShown && !LocaleController.isRTL && ev.getAction() == MotionEvent.ACTION_DOWN) {
@@ -254,14 +261,9 @@ public class ActionBar extends FrameLayout {
                 }
 
                 if (Theme.canStartHolidayAnimation()) {
-                    if (snowflakesEffect == null) {
-                        snowflakesEffect = new SnowflakesEffect(0);
-                    }
-                } else if (!manualStart) {
-                    if (snowflakesEffect != null) {
-                        snowflakesEffect = null;
-                    }
+                    snowflakesEffect = new SnowflakesEffect(0);
                 }
+
                 if (snowflakesEffect != null) {
                     snowflakesEffect.onDraw(this, canvas);
                 } else if (fireworksEffect != null) {
@@ -469,10 +471,7 @@ public class ActionBar extends FrameLayout {
     }
 
     public boolean actionModeIsExist(String tag) {
-        if (actionMode != null && ((actionModeTag == null && tag == null) || (actionModeTag != null && actionModeTag.equals(tag)))) {
-            return true;
-        }
-        return false;
+        return actionMode != null && ((actionModeTag == null && tag == null) || (actionModeTag != null && actionModeTag.equals(tag)));
     }
 
     public ActionBarMenu createActionMode(boolean needTop, String tag) {
@@ -555,11 +554,7 @@ public class ActionBar extends FrameLayout {
                 animators.add(ObjectAnimator.ofFloat(actionModeTop, View.ALPHA, 0.0f, 1.0f));
             }
             if (SharedConfig.noStatusBar) {
-                if (AndroidUtilities.computePerceivedBrightness(actionModeColor) < 0.721f) {
-                    AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), false);
-                } else {
-                    AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), true);
-                }
+                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), !(AndroidUtilities.computePerceivedBrightness(actionModeColor) < 0.721f));
             }
             if (actionModeAnimation != null) {
                 actionModeAnimation.cancel();
@@ -639,11 +634,7 @@ public class ActionBar extends FrameLayout {
                 actionModeTop.setAlpha(1.0f);
             }
             if (SharedConfig.noStatusBar) {
-                if (AndroidUtilities.computePerceivedBrightness(actionModeColor) < 0.721f) {
-                    AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), false);
-                } else {
-                    AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), true);
-                }
+                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), !(AndroidUtilities.computePerceivedBrightness(actionModeColor) < 0.721f));
             }
             actionMode.setVisibility(VISIBLE);
             if (occupyStatusBar && actionModeTop != null && !SharedConfig.noStatusBar) {
@@ -704,11 +695,7 @@ public class ActionBar extends FrameLayout {
             animators.add(ObjectAnimator.ofFloat(actionModeTop, View.ALPHA, 0.0f));
         }
         if (SharedConfig.noStatusBar) {
-            if (AndroidUtilities.computePerceivedBrightness(actionBarColor) < 0.721f) {
-                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), false);
-            } else {
-                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), true);
-            }
+            AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), !(AndroidUtilities.computePerceivedBrightness(actionBarColor) < 0.721f));
         }
         if (actionModeAnimation != null) {
             actionModeAnimation.cancel();
@@ -1327,11 +1314,12 @@ public class ActionBar extends FrameLayout {
     }
 
     public void setCastShadows(boolean value) {
+        if (CatogramConfig.INSTANCE.getFlatActionbar()) return;
         castShadows = value;
     }
 
     public boolean getCastShadows() {
-        return castShadows;
+        return !CatogramConfig.INSTANCE.getFlatActionbar();
     }
 
     @Override
@@ -1414,11 +1402,7 @@ public class ActionBar extends FrameLayout {
         super.onAttachedToWindow();
         ellipsizeSpanAnimator.onAttachedToWindow();
         if (SharedConfig.noStatusBar && actionModeVisible) {
-            if (AndroidUtilities.computePerceivedBrightness(actionModeColor) < 0.721f) {
-                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), false);
-            } else {
-                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), true);
-            }
+            AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), !(AndroidUtilities.computePerceivedBrightness(actionModeColor) < 0.721f));
         }
     }
 
@@ -1427,11 +1411,7 @@ public class ActionBar extends FrameLayout {
         super.onDetachedFromWindow();
         ellipsizeSpanAnimator.onDetachedFromWindow();
         if (SharedConfig.noStatusBar && actionModeVisible) {
-            if (AndroidUtilities.computePerceivedBrightness(actionBarColor) < 0.721f) {
-                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), false);
-            } else {
-                AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), true);
-            }
+            AndroidUtilities.setLightStatusBar(((Activity) getContext()).getWindow(), !(AndroidUtilities.computePerceivedBrightness(actionBarColor) < 0.721f));
         }
     }
 
