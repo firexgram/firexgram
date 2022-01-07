@@ -8,6 +8,8 @@
 [submodule "TMessagesProj/jni/libvpx"]
 	path = TMessagesProj/jni/libvpx
 	url = https://github.com/webmproject/libvpx
+	ignore = all
 [submodule "TMessagesProj/jni/ffmpeg"]
 	path = TMessagesProj/jni/ffmpeg
 	url = https://github.com/FFmpeg/FFmpeg
+	ignore = all
