@@ -96,6 +96,7 @@ import org.telegram.ui.PhotoPickerSearchActivity;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import ua.itaysonlab.catogram.translate.Translator;
 import ua.itaysonlab.catogram.translate.impl.GoogleTranslateImpl;
 
 public class ChatAttachAlert extends BottomSheet implements NotificationCenter.NotificationCenterDelegate, BottomSheet.BottomSheetDelegateInterface {
@@ -1675,7 +1676,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                             dismiss();
                         }
                     } else if (num == 2) {
-                        GoogleTranslateImpl.translateComment(commentTextView.getText().toString(), commentTextView);
+                        Translator.translateComment(commentTextView.getText().toString(), commentTextView);
                     }
                 });
                 i++;

@@ -99,6 +99,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import ua.itaysonlab.catogram.translate.Translator;
+
 public class TranslateAlert extends Dialog {
     private FrameLayout bulletinContainer;
 //    private FrameLayout statusBar;
@@ -135,6 +137,9 @@ public class TranslateAlert extends Dialog {
     private float containerOpenAnimationT = 0f;
     private float openAnimationT = 0f;
     private float epsilon = 0.001f;
+
+    private boolean catoInject;
+
     private void openAnimation(float t) {
         t = Math.min(Math.max(t, 0f), 1f);
         if (containerOpenAnimationT == t)
@@ -266,8 +271,9 @@ public class TranslateAlert extends Dialog {
     private BaseFragment fragment;
     private boolean noforwards;
     private OnLinkPress onLinkPress = null;
-    public TranslateAlert(BaseFragment fragment, Context context, String fromLanguage, String toLanguage, CharSequence text, boolean noforwards, OnLinkPress onLinkPress) {
+    public TranslateAlert(BaseFragment fragment, Context context, String fromLanguage, String toLanguage, CharSequence text, boolean noforwards, OnLinkPress onLinkPress, boolean cato) {
         super(context, R.style.TransparentDialog);
+        catoInject = cato;
 
         this.onLinkPress = onLinkPress;
         this.noforwards = noforwards;
@@ -1137,7 +1143,7 @@ public class TranslateAlert extends Dialog {
 
         fetchTranslation(
             blockText,
-            (String translatedText, String sourceLanguage) -> {
+            (String translatedText, String sourceLanguage, String targetLanguage) -> {
                 loaded = true;
                 Spannable spannable = new SpannableStringBuilder(translatedText);
                 try {
@@ -1225,7 +1231,12 @@ public class TranslateAlert extends Dialog {
 
 
                 fromLanguage = sourceLanguage;
-                updateSourceLanguage();
+                if (!catoInject) {
+                    updateSourceLanguage();
+                } else {
+                    subtitleFromView.setText(fromLanguage);
+                    subtitleToView.setText(targetLanguage);
+                }
 
                 blockIndex++;
                 showTranslateMoreView(blockIndex < textBlocks.size());
@@ -1258,13 +1269,25 @@ public class TranslateAlert extends Dialog {
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36" // 4.8%
     };
     public interface OnTranslationSuccess {
-        public void run(String translated, String sourceLanguage);
+        public void run(String translated, String sourceLanguage, String targetLanguage /* by catox */);
     }
     public interface OnTranslationFail {
         public void run(boolean rateLimit);
     }
     private long minFetchingDuration = 1000;
     private void fetchTranslation(CharSequence text, OnTranslationSuccess onSuccess, OnTranslationFail onFail) {
+        if (catoInject) {
+            Translator.translateTextWithLangInfo(text.toString(), false, (newText, fromLang, toLang) -> {
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (toLang.equals("Error"))
+                        onFail.run(false);
+                    else
+                        onSuccess.run(newText, fromLang.toLowerCase(), toLang);
+                });
+                return null;
+            });
+            return;
+        }
         new Thread() {
             @Override
             public void run() {
@@ -1298,7 +1321,8 @@ public class TranslateAlert extends Dialog {
                     String sourceLanguage = null;
                     try {
                         sourceLanguage = array.getString(2);
-                    } catch (Exception e2) {}
+                    } catch (Exception e2) {
+                    }
                     if (sourceLanguage != null && sourceLanguage.contains("-")) {
                         sourceLanguage = sourceLanguage.substring(0, sourceLanguage.indexOf("-"));
                     }
@@ -1317,7 +1341,7 @@ public class TranslateAlert extends Dialog {
                         sleep(minFetchingDuration - elapsed);
                     AndroidUtilities.runOnUIThread(() -> {
                         if (onSuccess != null)
-                            onSuccess.run(finalResult, finalSourceLanguage);
+                            onSuccess.run(finalResult, finalSourceLanguage, null /* by catox, not used in official impl */);
                     });
                 } catch (Exception e) {
                     try {
@@ -1345,7 +1369,18 @@ public class TranslateAlert extends Dialog {
     }
 
     public static void showAlert(Context context, BaseFragment fragment, String fromLanguage, String toLanguage, CharSequence text, boolean noforwards, OnLinkPress onLinkPress) {
-        TranslateAlert alert = new TranslateAlert(fragment, context, fromLanguage, toLanguage, text, noforwards, onLinkPress);
+        TranslateAlert alert = new TranslateAlert(fragment, context, fromLanguage, toLanguage, text, noforwards, onLinkPress, false);
+        if (fragment != null) {
+            if (fragment.getParentActivity() != null) {
+                fragment.showDialog(alert);
+            }
+        } else {
+            alert.show();
+        }
+    }
+
+    public static void showAlertCato(Context context, BaseFragment fragment, String toLanguage, CharSequence text, boolean noforwards, OnLinkPress onLinkPress) {
+        TranslateAlert alert = new TranslateAlert(fragment, context, null, toLanguage, text, noforwards, onLinkPress, true);
         if (fragment != null) {
             if (fragment.getParentActivity() != null) {
                 fragment.showDialog(alert);
