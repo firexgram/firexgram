@@ -149,7 +149,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import ua.itaysonlab.CatogramLogger;
-import ua.itaysonlab.catogram.translate.impl.GoogleTranslateImpl;
+import ua.itaysonlab.catogram.CatogramConfig;
+import ua.itaysonlab.catogram.translate.Translator;
 
 
 public class ChatActivityEnterView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, SizeNotifierFrameLayout.SizeNotifierFrameLayoutDelegate, StickersAlert.StickersAlertDelegate {
@@ -3730,7 +3731,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
                     } else if (num == 1) {
                         sendMessageInternal(false, 0);
                     } else {
-                       GoogleTranslateImpl.translateEditText(messageEditText.getText().toString(), messageEditText);
+                       Translator.translateEditText(messageEditText.getText().toString(), messageEditText);
                     }
                 });
             }
@@ -6860,7 +6861,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             }
         }
         boolean wasVisible = senderSelectView.getVisibility() == View.VISIBLE;
-        boolean isVisible = delegate.getSendAsPeers() != null && defPeer != null && delegate.getSendAsPeers().peers.size() > 1 && !isEditingMessage() && !isRecordingAudioVideo();
+        boolean isVisible = delegate.getSendAsPeers() != null && defPeer != null && delegate.getSendAsPeers().peers.size() > 1 && !isEditingMessage() && !isRecordingAudioVideo() && !CatogramConfig.INSTANCE.getHideSendAsChannel();
         int pad = AndroidUtilities.dp(2);
         MarginLayoutParams params = (MarginLayoutParams) senderSelectView.getLayoutParams();
         float sA = isVisible ? 0 : 1;

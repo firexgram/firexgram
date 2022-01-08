@@ -93,6 +93,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import ua.itaysonlab.catogram.translate.Translator;
+
 public class TranslateAlert extends Dialog {
     private FrameLayout statusBar;
     private FrameLayout contentView;
@@ -127,6 +129,9 @@ public class TranslateAlert extends Dialog {
 
     private float containerOpenAnimationT = 0f;
     private float openAnimationT = 0f;
+
+    private boolean catoInject;
+
     private void openAnimation(float t) {
         t = Math.min(Math.max(t, 0), 1);
         containerOpenAnimationT = t;
@@ -228,8 +233,9 @@ public class TranslateAlert extends Dialog {
     private CharSequence text;
     private BaseFragment fragment;
     private boolean noforwards;
-    public TranslateAlert(BaseFragment fragment, Context context, String fromLanguage, String toLanguage, CharSequence text, boolean noforwards) {
+    public TranslateAlert(BaseFragment fragment, Context context, String fromLanguage, String toLanguage, CharSequence text, boolean noforwards, boolean cato) {
         super(context, R.style.TransparentDialog);
+        catoInject = cato;
 
         this.noforwards = noforwards;
         this.fragment = fragment;
@@ -1005,7 +1011,7 @@ public class TranslateAlert extends Dialog {
 
         fetchTranslation(
                 blockText,
-                (String translatedText, String sourceLanguage) -> {
+                (String translatedText, String sourceLanguage, String targetLanguage) -> {
                     loaded = true;
                     Spannable spannable = new SpannableStringBuilder(translatedText);
                     try {
@@ -1043,7 +1049,12 @@ public class TranslateAlert extends Dialog {
                     allTexts = new SpannableStringBuilder(allTextsView.getText()).append(blockIndex == 0 ? "" : "\n").append(spannable);
 
                     fromLanguage = sourceLanguage;
-                    updateSourceLanguage();
+                    if (!catoInject) {
+                        updateSourceLanguage();
+                    } else {
+                        subtitleFromView.setText(fromLanguage);
+                        subtitleToView.setText(targetLanguage);
+                    }
 
                     blockIndex++;
                     showTranslateMoreView(blockIndex < textBlocks.size());
@@ -1070,94 +1081,118 @@ public class TranslateAlert extends Dialog {
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36" // 4.8%
     };
     public interface OnTranslationSuccess {
-        public void run(String translated, String sourceLanguage);
+        public void run(String translated, String sourceLanguage, String targetLanguage /* by catox */);
     }
     public interface OnTranslationFail {
         public void run(boolean rateLimit);
     }
     private long minFetchingDuration = 1000;
     private void fetchTranslation(CharSequence text, OnTranslationSuccess onSuccess, OnTranslationFail onFail) {
-        new Thread() {
-            @Override
-            public void run() {
-                String uri = "";
-                HttpURLConnection connection = null;
-                long start = SystemClock.elapsedRealtime();
-                try {
-                    uri = "https://translate.goo";
-                    uri += "gleapis.com/transl";
-                    uri += "ate_a";
-                    uri += "/singl";
-                    uri += "e?client=gtx&sl=" + Uri.encode(fromLanguage) + "&tl=" + Uri.encode(toLanguage) + "&dt=t" + "&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=7&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&q=";
-                    uri += Uri.encode(text.toString());
-                    connection = (HttpURLConnection) new URI(uri).toURL().openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.setRequestProperty("User-Agent", userAgents[(int) Math.round(Math.random() * (userAgents.length - 1))]);
-                    connection.setRequestProperty("Content-Type", "application/json");
+        if (!catoInject) {
+            new Thread() {
+                @Override
+                public void run() {
+                    String uri = "";
+                    HttpURLConnection connection = null;
+                    long start = SystemClock.elapsedRealtime();
+                    try {
+                        uri = "https://translate.goo";
+                        uri += "gleapis.com/transl";
+                        uri += "ate_a";
+                        uri += "/singl";
+                        uri += "e?client=gtx&sl=" + Uri.encode(fromLanguage) + "&tl=" + Uri.encode(toLanguage) + "&dt=t" + "&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=7&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&q=";
+                        uri += Uri.encode(text.toString());
+                        connection = (HttpURLConnection) new URI(uri).toURL().openConnection();
+                        connection.setRequestMethod("GET");
+                        connection.setRequestProperty("User-Agent", userAgents[(int) Math.round(Math.random() * (userAgents.length - 1))]);
+                        connection.setRequestProperty("Content-Type", "application/json");
 
-                    StringBuilder textBuilder = new StringBuilder();
-                    try (Reader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8")))) {
-                        int c = 0;
-                        while ((c = reader.read()) != -1) {
-                            textBuilder.append((char) c);
+                        StringBuilder textBuilder = new StringBuilder();
+                        try (Reader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8")))) {
+                            int c = 0;
+                            while ((c = reader.read()) != -1) {
+                                textBuilder.append((char) c);
+                            }
                         }
-                    }
-                    String jsonString = textBuilder.toString();
+                        String jsonString = textBuilder.toString();
 
-                    JSONTokener tokener = new JSONTokener(jsonString);
-                    JSONArray array = new JSONArray(tokener);
-                    JSONArray array1 = array.getJSONArray(0);
-                    String sourceLanguage = null;
-                    try {
-                        sourceLanguage = array.getString(2);
-                    } catch (Exception e2) {}
-                    if (sourceLanguage != null && sourceLanguage.contains("-")) {
-                        sourceLanguage = sourceLanguage.substring(0, sourceLanguage.indexOf("-"));
-                    }
-                    String result = "";
-                    for (int i = 0; i < array1.length(); ++i) {
-                        String blockText = array1.getJSONArray(i).getString(0);
-                        if (blockText != null && !blockText.equals("null"))
-                            result += /*(i > 0 ? "\n" : "") +*/ blockText;
-                    }
-                    if (text.length() > 0 && text.charAt(0) == '\n')
-                        result = "\n" + result;
-                    final String finalResult = result;
-                    final String finalSourceLanguage = sourceLanguage;
-                    long elapsed = SystemClock.elapsedRealtime() - start;
-                    if (elapsed < minFetchingDuration)
-                        sleep(minFetchingDuration - elapsed);
-                    AndroidUtilities.runOnUIThread(() -> {
-                        if (onSuccess != null)
-                            onSuccess.run(finalResult, finalSourceLanguage);
-                    });
-                } catch (Exception e) {
-                    try {
-                        Log.e("translate", "failed to translate a text " + (connection != null ? connection.getResponseCode() : null) + " " + (connection != null ? connection.getResponseMessage() : null));
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
-                    e.printStackTrace();
-
-                    if (onFail != null && !dismissed) {
+                        JSONTokener tokener = new JSONTokener(jsonString);
+                        JSONArray array = new JSONArray(tokener);
+                        JSONArray array1 = array.getJSONArray(0);
+                        String sourceLanguage = null;
                         try {
-                            final boolean rateLimit = connection != null && connection.getResponseCode() == 429;
-                            AndroidUtilities.runOnUIThread(() -> {
-                                onFail.run(rateLimit);
-                            });
+                            sourceLanguage = array.getString(2);
                         } catch (Exception e2) {
-                            AndroidUtilities.runOnUIThread(() -> {
-                                onFail.run(false);
-                            });
+                        }
+                        if (sourceLanguage != null && sourceLanguage.contains("-")) {
+                            sourceLanguage = sourceLanguage.substring(0, sourceLanguage.indexOf("-"));
+                        }
+                        String result = "";
+                        for (int i = 0; i < array1.length(); ++i) {
+                            String blockText = array1.getJSONArray(i).getString(0);
+                            if (blockText != null && !blockText.equals("null"))
+                                result += /*(i > 0 ? "\n" : "") +*/ blockText;
+                        }
+                        if (text.length() > 0 && text.charAt(0) == '\n')
+                            result = "\n" + result;
+                        final String finalResult = result;
+                        final String finalSourceLanguage = sourceLanguage;
+                        long elapsed = SystemClock.elapsedRealtime() - start;
+                        if (elapsed < minFetchingDuration)
+                            sleep(minFetchingDuration - elapsed);
+                        AndroidUtilities.runOnUIThread(() -> {
+                            if (onSuccess != null)
+                                onSuccess.run(finalResult, finalSourceLanguage, null /* by catox, not used in official impl */);
+                        });
+                    } catch (Exception e) {
+                        try {
+                            Log.e("translate", "failed to translate a text " + (connection != null ? connection.getResponseCode() : null) + " " + (connection != null ? connection.getResponseMessage() : null));
+                        } catch (IOException ioException) {
+                            ioException.printStackTrace();
+                        }
+                        e.printStackTrace();
+
+                        if (onFail != null && !dismissed) {
+                            try {
+                                final boolean rateLimit = connection != null && connection.getResponseCode() == 429;
+                                AndroidUtilities.runOnUIThread(() -> {
+                                    onFail.run(rateLimit);
+                                });
+                            } catch (Exception e2) {
+                                AndroidUtilities.runOnUIThread(() -> {
+                                    onFail.run(false);
+                                });
+                            }
                         }
                     }
                 }
-            }
-        }.start();
+            }.start();
+        } else {
+            Translator.translateTextWithLangInfo(text.toString(), false, (newText, fromLang, toLang) -> {
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (toLang.equals("Error"))
+                        onFail.run(false);
+                    else
+                        onSuccess.run(newText, fromLang.toLowerCase(), toLang);
+                });
+                return null;
+            });
+        }
     }
 
     public static void showAlert(Context context, BaseFragment fragment, String fromLanguage, String toLanguage, CharSequence text, boolean noforwards) {
-        TranslateAlert alert = new TranslateAlert(fragment, context, fromLanguage, toLanguage, text, noforwards);
+        TranslateAlert alert = new TranslateAlert(fragment, context, fromLanguage, toLanguage, text, noforwards, false);
+        if (fragment != null) {
+            if (fragment.getParentActivity() != null) {
+                fragment.showDialog(alert);
+            }
+        } else {
+            alert.show();
+        }
+    }
+
+    public static void showAlertCato(Context context, BaseFragment fragment, String toLanguage, CharSequence text, boolean noforwards) {
+        TranslateAlert alert = new TranslateAlert(fragment, context, null, toLanguage, text, noforwards, true);
         if (fragment != null) {
             if (fragment.getParentActivity() != null) {
                 fragment.showDialog(alert);
