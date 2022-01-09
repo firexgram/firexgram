@@ -18,6 +18,8 @@ import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.ReactionsContainerLayout;
 
+import ua.itaysonlab.catogram.CatogramConfig;
+
 public class ReactionsEffectOverlay {
 
     public static ReactionsEffectOverlay currentOverlay;
@@ -295,6 +297,7 @@ public class ReactionsEffectOverlay {
     }
 
     public static void show(BaseFragment baseFragment, ReactionsContainerLayout reactionsLayout, ChatMessageCell cell, float x, float y, String reaction, int currentAccount) {
+        if (CatogramConfig.INSTANCE.getDisableReactionAnim()) return;
         if (cell == null) {
             return;
         }
@@ -316,6 +319,7 @@ public class ReactionsEffectOverlay {
     }
 
     public static void startAnimation() {
+        if (CatogramConfig.INSTANCE.getDisableReactionAnim()) return;
         if (currentOverlay != null) {
             currentOverlay.started = true;
         }
