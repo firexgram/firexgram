@@ -80,6 +80,8 @@ import androidx.recyclerview.widget.LinearSmoothScrollerCustom;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.exoplayer2.util.Log;
+
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -180,6 +182,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import ua.itaysonlab.catogram.CatogramConfig;
+import ua.itaysonlab.catogram.tabs.TabIconManager;
 
 public class DialogsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
@@ -2135,6 +2138,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             filterTabsView.setVisibility(View.GONE);
             canShowFilterTabsView = false;
             filterTabsView.setDelegate(new FilterTabsView.FilterTabsViewDelegate() {
+
+                public void setAppTitle(String t) {
+                    DialogsActivity.this.actionBar.setTitle(t);
+                }
 
                 private void showDeleteAlert(MessagesController.DialogFilter dialogFilter) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
