@@ -1,3 +1,12 @@
+# Catogram X was discontinued.
+
+
+
+
+
+
+-------------
+
 <img src="https://avatars.githubusercontent.com/u/76093575?s=200&v=4" width="150" align="right"/>
 
 # Catogram X
